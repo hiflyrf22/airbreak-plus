@@ -3374,3 +3374,16 @@ if __name__ == "__main__":
     except Exception as exc:
         print("error: %s" % exc, file=sys.stderr)
         raise SystemExit(2)
+
+auto_dst_base_slot = self._elf_symbol_addr(elf_path, "auto_dst_base_var_id")
+dst_base_setting = self.custom_setting_claim(
+    "RTF", "patch-auto-dst", custom_name="AutoDstBaseOffsetMinutes")
+self.custom_setting_define(
+    dst_base_setting,
+    default=-300,   # e.g. US Eastern standard time; set per deployment
+    min=-720,
+    max=780,        # clamped so standard+60 never exceeds TZO's own 840 ceiling
+    step=60,
+    decimal_places=0,
+)
+self.custom_setting_bind(dst_base_setting, auto_dst_base_slot)
