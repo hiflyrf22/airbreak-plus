@@ -21,6 +21,7 @@
 # --patch-custom-settings y
 # --patch-motor-nagscreen y
 # --patch-timezone-write y
+#--patch-auto-dst y
 
 # Optional startup logo: 0 Off, 1 AirSense 11, 2 AirCurve 11, 3 Lumis 11, 4 ResMed.
 # Omitting the number selects 4; omitting the option leaves the logo unchanged.
