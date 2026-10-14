@@ -15,7 +15,21 @@ typedef struct {
     unsigned short empty;
     unsigned short menu;
 
-/* --- insert after the existing #define block, before header_clock_text_ids_t --- */
+/* Reclaimed boolean (field RIT). On/Off menu row gating auto_dst_tick().
+ * 0xFFFF => feature unclaimed for this build; same convention as the
+ * other reclaimed slots in this file. */
+volatile const unsigned short auto_dst_enable_var_id
+    __attribute__((used, section(".rodata.params.var_id"))) = 0xFFFFu;
+
+/* Orphaned reminder-category label this row's text is drawn over. */
+volatile const unsigned short auto_dst_label_text_id
+    __attribute__((used, section(".rodata.params"))) = 0xFFFFu;
+
+static int auto_dst_is_enabled(void)
+{
+    return auto_dst_enable_var_id != 0xFFFFu &&
+        DataItem_read_value_by_id(auto_dst_enable_var_id) != 0;
+}
 
 #define AUTO_DST_BUMP_MINUTES 60
 #define AUTO_DST_MIN_STANDARD_OFFSET_MIN (-720)
@@ -121,6 +135,8 @@ static int auto_dst_is_active(int local_days, unsigned int local_ms_of_day)
 
 static void auto_dst_tick(void)
 {
+    if (auto_dst_base_var_id == 0xFFFFu || !auto_dst_is_enabled())
+        return;
     int utc_days, utc_ms, standard_offset, current_tzo;
     int dst_was_active, effective_offset_before;
     int local_ms_signed, local_days, dst_active, desired_tzo;
@@ -276,21 +292,21 @@ void header_clock_menu_label_draw(
     int clip,
     unsigned int alignment)
 {
-    /* The custom row reuses the detached Reminders text ID. */
-    if (header_clock_var_id == 0xFFFFu ||
-            text_id != header_clock_text_ids.menu) {
+    const char *custom_text = 0;
+
+    if (header_clock_var_id != 0xFFFFu && text_id == header_clock_text_ids.menu)
+        custom_text = "Clock";
+    else if (auto_dst_enable_var_id != 0xFFFFu && text_id == auto_dst_label_text_id)
+        custom_text = "Auto DST";
+
+    if (custom_text == 0) {
         GuiPaint_DrawLocalizedTextById(
             text_id, rect, text_size, font, clip, alignment);
         return;
     }
 
     GuiPaint_DrawStringInRect(
-        "Clock",
-        rect,
-        text_size,
-        font,
-        clip,
-        alignment,
+        custom_text, rect, text_size, font, clip, alignment,
         gui_localized_text_font_slot_for_id(text_id));
 }
 
